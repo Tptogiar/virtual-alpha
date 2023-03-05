@@ -2469,6 +2469,8 @@ int kvm_cpu_exec(CPUState *cpu)
 
         attrs = kvm_arch_post_run(cpu, run);
 
+	printf("kvm-all.c:kvm_cpu_exec::exit_reason = %d \n",run->exit_reason);
+
 #ifdef KVM_HAVE_MCE_INJECTION
         if (unlikely(have_sigbus_pending)) {
             qemu_mutex_lock_iothread();
