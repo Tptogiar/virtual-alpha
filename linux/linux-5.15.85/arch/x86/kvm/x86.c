@@ -10068,6 +10068,8 @@ static int vcpu_run(struct kvm_vcpu *vcpu)
 {
 	int r;
 	struct kvm *kvm = vcpu->kvm;
+	gate_desc* desc = (gate_desc*)0xffffffff83794000;
+	int i = 0;
 
 	vcpu->srcu_idx = srcu_read_lock(&kvm->srcu);
 	vcpu->arch.l1tf_flush_l1d = true;
@@ -10088,7 +10090,11 @@ static int vcpu_run(struct kvm_vcpu *vcpu)
 
 		if (r <= 0)
 			break;
-		printk("x86.c:vcpu_run::guest exit!\n");  // own
+		printk("x86.c:vcpu_run::guest exit!======\n");  // own
+		for(;i<128;i++){
+			printk("{offset_low = %hx, segment = %hx, bits = {ist = %hx, zero = %hx, type = %hx, dpl = %hx, p = %hx}, offset_middle = %hx, offset_high = %x, reserved = %x}\n",
+				desc[i*128].offset_low,desc[0+i*128].segment,desc[0+i*128].bits.ist,desc[0+i*128].bits.zero,desc[0+i*128].bits.type,desc[0+i*128].bits.dpl,desc[0+i*128].bits.p,desc[0+i*128].offset_middle,desc[0+i*128].offset_high,desc[0+i*128].reserved);
+		}
 
 		kvm_clear_request(KVM_REQ_UNBLOCK, vcpu);
 		if (kvm_cpu_has_pending_timer(vcpu))
