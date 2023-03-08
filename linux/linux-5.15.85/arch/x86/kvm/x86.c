@@ -9912,7 +9912,7 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
 	} else if (unlikely(hw_breakpoint_active())) {
 		set_debugreg(0, 7);
 	}
-
+	printk("x86.c:kvm_entry_guest::entry_kvm=====\n");
 	for (;;) {
 		exit_fastpath = static_call(kvm_x86_run)(vcpu);
 		if (likely(exit_fastpath != EXIT_FASTPATH_REENTER_GUEST))
@@ -10068,7 +10068,8 @@ static int vcpu_run(struct kvm_vcpu *vcpu)
 {
 	int r;
 	struct kvm *kvm = vcpu->kvm;
-	gate_desc* desc = (gate_desc*)0xffffffff83794000;
+	gfn_t gfn = 0xffffffff83794000;
+	gate_desc* desc = (gate_desc*)gfn_to_pfn(kvm,gfn);
 	int i = 0;
 
 	vcpu->srcu_idx = srcu_read_lock(&kvm->srcu);
@@ -10083,6 +10084,7 @@ static int vcpu_run(struct kvm_vcpu *vcpu)
 		 */
 		vcpu->arch.at_instruction_boundary = false;
 		if (kvm_vcpu_running(vcpu)) {
+			printk("x86.c:vcpu_run:before vcpu_enter_guest\n");
 			r = vcpu_enter_guest(vcpu);
 		} else {
 			r = vcpu_block(kvm, vcpu);
@@ -10091,10 +10093,13 @@ static int vcpu_run(struct kvm_vcpu *vcpu)
 		if (r <= 0)
 			break;
 		printk("x86.c:vcpu_run::guest exit!======\n");  // own
+		printk("before for, i = %d \n",i);
+		printk("gate_desc desc = %lld \n",(long long int)desc);
 		for(;i<128;i++){
 			printk("{offset_low = %hx, segment = %hx, bits = {ist = %hx, zero = %hx, type = %hx, dpl = %hx, p = %hx}, offset_middle = %hx, offset_high = %x, reserved = %x}\n",
 				desc[i*128].offset_low,desc[0+i*128].segment,desc[0+i*128].bits.ist,desc[0+i*128].bits.zero,desc[0+i*128].bits.type,desc[0+i*128].bits.dpl,desc[0+i*128].bits.p,desc[0+i*128].offset_middle,desc[0+i*128].offset_high,desc[0+i*128].reserved);
 		}
+		printk("after printk, i = %d \n",i);
 
 		kvm_clear_request(KVM_REQ_UNBLOCK, vcpu);
 		if (kvm_cpu_has_pending_timer(vcpu))
